@@ -1,14 +1,13 @@
 import argparse
 import subprocess
 import sys
-from pathlib import Path
 import csv
 from datetime import datetime
 from pathlib import Path
 
 """
-File to run the entire pipeline for immediate results and convenice. Exports results to CSV for convenience
-of viewing results, especially over multiple runs. 
+File to run the entire pipeline for immediate results and convenience.
+Exports results to CSV for convenience of viewing results, especially over multiple runs.
 """
 
 root = Path(__file__).resolve().parent
@@ -67,36 +66,35 @@ def main():
 
     args = ap.parse_args()
 
-    # Export once 
+    # Export once
     if not args.skip_export:
         run(scripts["export"])
 
-    # Prepare results CSV
+    # Prepare results CSV (trimmed columns + running accuracy)
     results_path = root / "data" / "trial_results.csv"
     results_path.parent.mkdir(parents=True, exist_ok=True)
 
+    fieldnames = [
+        #"timestamp",
+        "trial_id",
+        "mode",
+        "functions_keyset",
+        "top_level_keys",
+        "accuracy",
+    ]
+
     new_file = not results_path.exists()
     csv_f = open(results_path, "a", newline="", encoding="utf-8")
-    writer = csv.DictWriter(
-        csv_f,
-        fieldnames=[
-            "timestamp",
-            "trial_id",
-            "seed",
-            "mode",
-            "order",
-            "functions_keyset",
-            "top_level_keys",
-        ],
-    )
+    writer = csv.DictWriter(csv_f, fieldnames=fieldnames)
 
     if new_file:
         writer.writeheader()
 
     trials = args.trials
+    success_count = 0
 
     for t in range(trials):
-        print(f"\n----- TRIAL {t + 1} / {trials}-----")
+        print(f"\n===== TRIAL {t + 1} / {trials} =====")
 
         # Build mutation args
         mutate_args = [
@@ -117,7 +115,7 @@ def main():
         run(scripts["repair"])
         run(scripts["to_pkl"])
         if trials == 1:
-            run(scripts["break_demo"]) # Tons of terminal bloat. If multiple runs, just skip.
+            run(scripts["break_demo"])  # Tons of terminal bloat. If multiple runs, just skip.
 
         # Defaults in case compare is skipped
         functions_keyset = "SKIPPED"
@@ -142,14 +140,19 @@ def main():
         print("\n[TOP-LEVEL PATCH KEYS CHECK]")
         print(f"  {top_level_keys}: top-level patch keys")
 
+        # Running accuracy. Count a success only if both checks pass
+        trial_passed = (functions_keyset == "PASS") and (top_level_keys == "PASS")
+        if trial_passed:
+            success_count += 1
+        accuracy = f"{success_count}/{t + 1}"
+
         writer.writerow({
-            "timestamp": datetime.now().isoformat(timespec="seconds"),
+            #"timestamp": datetime.now().isoformat(timespec="seconds"),
             "trial_id": t,
-            "seed": t,
             "mode": args.mutate_mode or "default",
-            "order": args.order or "default",
             "functions_keyset": functions_keyset,
             "top_level_keys": top_level_keys,
+            "accuracy": accuracy,
         })
         csv_f.flush()
 
