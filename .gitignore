@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+.env
+.venv
+env/
+zenllm/
+
+# Data artifacts (generated)
+data/patch_*.json
+data/patch_*.pkl
+data/mutation_log.json
+data/repair_plan.json
+
+# OS junk
+.DS_Store
+Thumbs.db
