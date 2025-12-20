@@ -29,6 +29,7 @@ Tested on:
 Install dependencies:
 ```bash
 pip install -r requirements.txt
+```
 
 ## Running the Full Pipeline
 
@@ -40,6 +41,7 @@ Run the 30 trial experiment that was reported in the paper:
 
 ```bash
 python run_pipeline.py --skip-export --trials 30 --mutate-mode random
+```
 
 ---
 
@@ -49,3 +51,4 @@ Run a single trial of the full pipeline:
 
 ```bash
 python run_pipeline.py
+```
